@@ -49,6 +49,21 @@ body.lv main>#logv{display:block}
 <h1>حاسبة جرعة الخافض والمسكّن للأطفال</h1>
 <p class="sub">باراسيتامول (للرضع والأطفال) وإيبوبروفين (للأطفال)</p>
 
+<div class="card" id="kc">
+<label for="ks" style="margin-top:0">الطفل</label>
+<select id="ks"></select>
+<div class="row" style="margin-top:8px">
+<button class="add sec" type="button" id="kadd" style="margin:0">إضافة طفل</button>
+<button class="add sec" type="button" id="kren" style="margin:0">تعديل الاسم</button>
+<button class="add sec" type="button" id="kdel" style="margin:0">حذف الطفل</button>
+</div>
+<div id="kform" style="display:none;margin-top:8px">
+<input id="kn" type="text" maxlength="30" placeholder="اسم الطفل">
+<div class="row" style="margin-top:8px"><button class="add" type="button" id="ksv" style="margin:0">حفظ</button><button class="add sec" type="button" id="kx" style="margin:0">إلغاء</button></div>
+<div id="kerr" class="note"></div>
+</div>
+</div>
+
 <div class="card">
 <div class="seg" role="group" aria-label="الدواء">
 <button id="bP" class="on" type="button">باراسيتامول</button>
@@ -75,7 +90,7 @@ body.lv main>#logv{display:block}
 <div id="out"></div>
 
 <div class="card" id="logc">
-<h2>سجل المتابعة</h2>
+<h2 id="lh2">سجل المتابعة</h2>
 <label>ماذا تريد أن تسجل؟</label>
 <input type="hidden" id="lk" value="">
 <div class="seg" id="lkb"><button type="button" data-k="T">درجة الحرارة</button><button type="button" data-k="P">باراسيتامول</button><button type="button" data-k="I">إيبوبروفين</button></div>
@@ -89,6 +104,11 @@ body.lv main>#logv{display:block}
 <button class="add" type="button" id="la">إضافة للسجل</button>
 <button class="add sec" type="button" id="lcx" style="display:none">إلغاء التعديل</button>
 <div id="nx" style="margin-top:10px"></div>
+<div id="nfw" style="display:none;margin-top:10px">
+<label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" id="nf" style="width:auto">تنبيه على الجوال عند موعد الجرعة التالية</label>
+<button class="add sec" type="button" id="nfx" style="display:none">اسمح بالتوقيت الدقيق للتنبيه</button>
+</div>
+<div id="nfn" class="note" style="margin-top:10px">التنبيه على الجوال متاح في تطبيق الأندرويد فقط.</div>
 <h2 style="margin-top:14px">تذبذب درجة الحرارة</h2>
 <div id="chart"></div>
 <div id="sm" style="margin-top:10px"></div>
@@ -98,9 +118,10 @@ body.lv main>#logv{display:block}
 
 <div class="card" id="logv">
 <button class="add sec" type="button" id="vback" style="margin:0 0 10px">رجوع</button>
-<h2>سجل الجرعات والحرارة</h2>
+<h2 id="lh">سجل الجرعات والحرارة</h2>
+<button class="add sec" type="button" id="sa" style="margin:0 0 10px">عرض كل الأطفال</button>
 <div id="ll"></div>
-<button class="add sec" type="button" id="lc">مسح السجل</button>
+<button class="add sec" type="button" id="lc">مسح سجل هذا الطفل</button>
 </div>
 
 <div class="card note">
@@ -142,32 +163,37 @@ function calc(){
  html+='</ul>';
  if(med==="I"&&m<6)html+='<div class="note">بعض النشرات تحدد الإيبوبروفين من عمر 6 أشهر، فتأكد من نشرة المنتج أو من الطبيب قبل الاستخدام.</div>';
  if(cc>0&&cc>120)html+='<div class="note">تحقق من التركيز المدخل فهو مرتفع جدًا.</div>';
- window.LD={med:med,ml:cc>0?Math.round(d2/cc*10)/10:null};if(cc>0)html+='<button class="add" type="button" onclick="addDose()">سجّل هذه الجرعة الآن في السجل</button>';
+ window.LD={med:med,ml:cc>0?Math.round(d2/cc*10)/10:null};if(cc>0)html+='<button class="add" type="button" onclick="addDose()">سجّل هذه الجرعة لـ '+KN()+' الآن</button>';
  box("ok",html);
 }
 function setMed(x){med=x;$("bP").classList.toggle("on",x==="P");$("bI").classList.toggle("on",x==="I");fillConc();calc()}
 $("bP").onclick=function(){setMed("P")};$("bI").onclick=function(){setMed("I")};
 ["w","a","u","c","cm","cu"].forEach(function(i){$(i).addEventListener("input",calc);$(i).addEventListener("change",calc)});
-var KEY='doselog',LOG=[],NM={P:'باراسيتامول',I:'إيبوبروفين'};
-function load(){try{LOG=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){LOG=[]}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(LOG))}catch(e){}}
+var KEY='doselog',CKEY='dosekids',LOG=[],ALL=[],KIDS=[],CUR=null,SHOWALL=false,NM={P:'باراسيتامول',I:'إيبوبروفين'};
+function load(){try{ALL=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){ALL=[]}
+ try{KIDS=JSON.parse(localStorage.getItem(CKEY)||'[]');CUR=localStorage.getItem(CKEY+'cur')}catch(e){KIDS=[]}
+ if(!KIDS.length)KIDS=[{id:'k1',name:'الطفل الأول'}];
+ if(!KIDS.some(function(k){return k.id===CUR}))CUR=KIDS[0].id;
+ ALL.forEach(function(e){if(!e.cid)e.cid=KIDS[0].id})}
+function setLog(){ALL.sort(function(a,b){return a.t-b.t});LOG=ALL.filter(function(e){return e.cid===CUR})}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(ALL));localStorage.setItem(CKEY,JSON.stringify(KIDS));localStorage.setItem(CKEY+'cur',CUR)}catch(e){}}
 function nowL(){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
 function fd(t){try{return new Date(t).toLocaleString('ar',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}catch(e){return ''+new Date(t)}}
 function hm(t){try{return new Date(t).toLocaleTimeString('ar',{hour:'numeric',minute:'2-digit'})}catch(e){return ''}}
-function push(e){e.id=Date.now()+Math.floor(Math.random()*1000);LOG.push(e);LOG.sort(function(a,b){return a.t-b.t});save();render()}
+function push(e){e.id=Date.now()+Math.floor(Math.random()*1000);e.cid=CUR;ALL.push(e);save();render()}
 function addDose(){if(!window.LD)return;push({k:window.LD.med,v:window.LD.ml,t:Date.now()});var b=document.querySelector('#out .add');if(b){b.textContent='تم التسجيل';b.disabled=true}}
 function addEntry(){var k=$('lk').value,v=parseFloat($('lv').value),t=new Date($('lt').value).getTime(),er=$('lerr');
  if(!k){er.textContent='اختر نوع التسجيل أولًا.';return}
  if(!v||isNaN(t)){er.textContent='أدخل القيمة والوقت.';return}
  if(k==='T'&&(v<34||v>43)){er.textContent='درجة الحرارة غير منطقية (34–43).';return}
  if(k!=='T'&&v>30){er.textContent='تحقق من الكمية بالمل.';return}
- er.textContent='';if(EID){var x=LOG.filter(function(e){return e.id===EID})[0];if(x){x.k=k;x.v=v;x.t=t;LOG.sort(function(a,b){return a.t-b.t});save();render()}endEdit();return}push({k:k,v:v,t:t});$('lv').value='';$('lt').value=nowL()}
+ er.textContent='';if(EID){var x=LOG.filter(function(e){return e.id===EID})[0];if(x){x.k=k;x.v=v;x.t=t;save();render()}endEdit();return}push({k:k,v:v,t:t});$('lv').value='';$('lt').value=nowL()}
 var EID=null;
 function toL(t){var d=new Date(t);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
 function go(l){document.body.classList.toggle('lv',l);try{location.hash=l?'log':''}catch(x){}window.scrollTo(0,0)}
-function edit(id){var e=LOG.filter(function(x){return x.id===id})[0];if(!e)return;go(false);EID=id;document.querySelector('#lkb button[data-k='+e.k+']').click();$('lv').value=e.v==null?'':e.v;$('lt').value=toL(e.t);$('la').textContent='حفظ التعديل';$('lcx').style.display='block';$('logc').scrollIntoView({behavior:'smooth'})}
+function edit(id){var e=ALL.filter(function(x){return x.id===id})[0];if(!e)return;if(e.cid!==CUR){CUR=e.cid;save();render()}go(false);EID=id;document.querySelector('#lkb button[data-k='+e.k+']').click();$('lv').value=e.v==null?'':e.v;$('lt').value=toL(e.t);$('la').textContent='حفظ التعديل';$('lcx').style.display='block';$('logc').scrollIntoView({behavior:'smooth'})}
 function endEdit(){EID=null;$('la').textContent='إضافة للسجل';$('lcx').style.display='none';$('lv').value='';$('lt').value=nowL()}
-function del(id){if(EID===id)endEdit();LOG=LOG.filter(function(e){return e.id!==id});save();render()}
+function del(id){if(EID===id)endEdit();ALL=ALL.filter(function(e){return e.id!==id});save();render()}
 function chart(){
  var T=LOG.filter(function(e){return e.k==='T'});
  if(T.length<2)return `<div class='note'>سجّل قراءتين للحرارة على الأقل لعرض الرسم البياني.</div>`;
@@ -206,8 +232,49 @@ function summary(){
  var ag=parseFloat($('a').value),mo=isNaN(ag)?null:($('u').value==='y'?ag*12:ag);
  if(mo!==null&&mo<3&&v>=38){cls='bad';L.push('<b>عمر أقل من 3 أشهر مع حرارة 38°م فأكثر: يلزم تقييم طبي فورًا.</b>')}
  if(v>=40){cls='bad';L.push('<b>حرارة 40°م فأكثر: راجع الطبيب أو الطوارئ.</b>')}
- return `<div class='res ${cls}'><b>وضع الطفل حسب القراءات المسجلة</b><ul>${L.map(function(x){return '<li>'+x+'</li>'}).join('')}</ul></div><details style='margin-top:8px'><summary>متى أراجع الطبيب؟</summary><ul><li>حرارة 40°م فأكثر، أو 38°م فأكثر لمن هم أقل من 3 أشهر.</li><li>استمرار الحمى أكثر من 48–72 ساعة، أو عدم انخفاضها رغم الجرعات.</li><li>خمول شديد أو صعوبة في الاستيقاظ، أو تشنجات، أو تيبس في الرقبة.</li><li>صعوبة في التنفس، أو طفح جلدي لا يختفي بالضغط.</li><li>رفض الشرب أو قلة التبول، أو قيء متكرر، أو ألم شديد.</li></ul></details><div class='note' style='margin-top:6px'>هذا ملخص آلي من القراءات التي أدخلتها وليس تشخيصًا.</div>`}
+ return `<div class='res ${cls}'><b>وضع ${KN()} حسب القراءات المسجلة</b><ul>${L.map(function(x){return '<li>'+x+'</li>'}).join('')}</ul></div><details style='margin-top:8px'><summary>متى أراجع الطبيب؟</summary><ul><li>حرارة 40°م فأكثر، أو 38°م فأكثر لمن هم أقل من 3 أشهر.</li><li>استمرار الحمى أكثر من 48–72 ساعة، أو عدم انخفاضها رغم الجرعات.</li><li>خمول شديد أو صعوبة في الاستيقاظ، أو تشنجات، أو تيبس في الرقبة.</li><li>صعوبة في التنفس، أو طفح جلدي لا يختفي بالضغط.</li><li>رفض الشرب أو قلة التبول، أو قيء متكرر، أو ألم شديد.</li></ul></details><div class='note' style='margin-top:6px'>هذا ملخص آلي من القراءات التي أدخلتها وليس تشخيصًا.</div>`}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function kname(id){var k=KIDS.filter(function(x){return x.id===(id||CUR)})[0];return k?k.name:''}
+function KN(id){return esc(kname(id))}
+function saveKid(){var k=KIDS.filter(function(x){return x.id===CUR})[0];if(!k)return;k.w=$('w').value;k.a=$('a').value;k.u=$('u').value;save()}
+function applyKid(){var k=KIDS.filter(function(x){return x.id===CUR})[0]||{};$('w').value=k.w||'';$('a').value=k.a||'';$('u').value=k.u||'m';calc()}
+function switchKid(id){if(EID)endEdit();saveKid();CUR=id;save();applyKid();render()}
+function renderKids(){$('ks').innerHTML=KIDS.map(function(k){return '<option value="'+k.id+'"'+(k.id===CUR?' selected':'')+'>'+esc(k.name)+'</option>'}).join('');$('lh').innerHTML='سجل '+KN();$('lh2').innerHTML='سجل متابعة '+KN();$('kdel').disabled=KIDS.length<2}
+var KMODE=null,kd=false;
+function kopen(m){KMODE=m;$('kform').style.display='block';$('kerr').textContent='';$('kn').value=m==='ren'?kname():'';$('kn').focus()}
+$('ks').onchange=function(){switchKid(this.value)};
+$('kadd').onclick=function(){kopen('add')};
+$('kren').onclick=function(){kopen('ren')};
+$('kx').onclick=function(){$('kform').style.display='none';KMODE=null};
+$('ksv').onclick=function(){var n=$('kn').value.trim();if(!n){$('kerr').textContent='اكتب اسم الطفل.';return}
+ if(KIDS.some(function(k){return k.name===n&&!(KMODE==='ren'&&k.id===CUR)})){$('kerr').textContent='هذا الاسم موجود مسبقًا.';return}
+ if(KMODE==='add'){var id='k'+Date.now();KIDS.push({id:id,name:n});switchKid(id)}else{KIDS.filter(function(k){return k.id===CUR})[0].name=n;save();render()}
+ $('kform').style.display='none';KMODE=null};
+$('kdel').onclick=function(){if(KIDS.length<2)return;if(!kd){kd=true;this.textContent='اضغط للتأكيد';setTimeout(function(){kd=false;$('kdel').textContent='حذف الطفل'},4000);return}
+ kd=false;$('kdel').textContent='حذف الطفل';var id=CUR;if(EID)endEdit();try{var b=BR();if(b){b.cancel(id+'_P');b.cancel(id+'_I')}}catch(e){}ALL=ALL.filter(function(e){return e.cid!==id});KIDS=KIDS.filter(function(k){return k.id!==id});CUR=KIDS[0].id;save();applyKid();render()};
+$('sa').onclick=function(){SHOWALL=!SHOWALL;this.textContent=SHOWALL?'عرض الطفل الحالي فقط':'عرض كل الأطفال';render()};
+['w','a','u'].forEach(function(i){$(i).addEventListener('input',saveKid);$(i).addEventListener('change',saveKid)});
+function BR(){return window.AndroidBridge||null}
+var GAPS={P:6,I:8};
+function notifOn(){try{return localStorage.getItem('notifon')==='1'}catch(e){return false}}
+function syncAlarms(){var b=BR();if(!b)return;
+ try{
+  if(!notifOn()){b.cancelAll();return}
+  var now=Date.now();
+  KIDS.forEach(function(kid){['P','I'].forEach(function(k){
+   var id=kid.id+'_'+k,d=ALL.filter(function(e){return e.cid===kid.id&&e.k===k}),last=d[d.length-1];
+   if(!last){b.cancel(id);return}
+   var nxt=last.t+GAPS[k]*36e5;
+   if(nxt>now)b.schedule(id,''+nxt,'موعد الجرعة التالية: '+kname(kid.id),'يمكن إعطاء جرعة '+NM[k]+' الآن إن كان الطفل يحتاجها. راجع السجل وعدد الجرعات اليوم.');
+   else b.cancel(id)})})
+ }catch(e){}}
+function nfUI(){var b=BR();$('nfw').style.display=b?'block':'none';$('nfn').style.display=b?'none':'block';if(!b)return;
+ var on=notifOn(),ex=true;try{ex=b.exactOk()}catch(e){}
+ $('nf').checked=on;$('nfx').style.display=(on&&!ex)?'block':'none'}
+$('nf').onchange=function(){try{localStorage.setItem('notifon',this.checked?'1':'0')}catch(e){}var b=BR();if(b&&this.checked){try{b.requestPermission()}catch(e){}}render()};
+$('nfx').onclick=function(){try{BR().openExactSettings()}catch(e){}};
 function render(){
+ setLog();renderKids();nfUI();syncAlarms();
  var now=Date.now(),gaps={P:6,I:8},mx={P:4,I:3},nx='';
  ['P','I'].forEach(function(k){
   var d=LOG.filter(function(e){return e.k===k});if(!d.length)return;
@@ -219,15 +286,15 @@ function render(){
  if(lt&&lt.v>=40)nx+=`<div class='res bad' style='margin:6px 0'>آخر قراءة ${lt.v}°م مرتفعة جدًا، راجع الطبيب فورًا.</div>`;
  else if(lt&&lt.v>=39)nx+=`<div class='res warn' style='margin:6px 0'>آخر قراءة ${lt.v}°م مرتفعة، راجع الطبيب إن استمرت أو ظهرت أعراض أخرى.</div>`;
  $('nx').innerHTML=nx;$('vb').textContent='مشاهدة السجل ('+LOG.length+')';$('chart').innerHTML=chart();$('sm').innerHTML=summary();
- $('ll').innerHTML=LOG.slice().reverse().map(function(e){var s=e.k==='T'?'حرارة '+e.v+'°م':NM[e.k]+(e.v!=null?' '+e.v+' مل':'');return `<div class='li'><span>${s}<br><span class='note'>${fd(e.t)}</span></span><span><button type='button' style='color:var(--accent)' onclick='edit(${e.id})'>تعديل</button><button type='button' onclick='del(${e.id})'>حذف</button></span></div>`}).join('');
+ $('ll').innerHTML=(SHOWALL?ALL:LOG).slice().reverse().map(function(e){var s=e.k==='T'?'حرارة '+e.v+'°م':NM[e.k]+(e.v!=null?' '+e.v+' مل':'');return `<div class='li'><span>${SHOWALL?'<b>'+KN(e.cid)+'</b> · ':''}${s}<br><span class='note'>${fd(e.t)}</span></span><span><button type='button' style='color:var(--accent)' onclick='edit(${e.id})'>تعديل</button><button type='button' onclick='del(${e.id})'>حذف</button></span></div>`}).join('');
 }
 Array.prototype.forEach.call(document.querySelectorAll('#lkb button'),function(b){b.onclick=function(){var k=b.getAttribute('data-k');$('lk').value=k;Array.prototype.forEach.call(document.querySelectorAll('#lkb button'),function(x){x.classList.toggle('on',x===b)});$('lbox').style.display='block';$('lvl').textContent=k==='T'?'درجة الحرارة (°م)':'كمية '+NM[k]+' (مل)';$('lv').value='';$('lerr').textContent='';$('lv').focus()}});
 $('la').onclick=addEntry;$('lcx').onclick=endEdit;
 var armed=false;
-$('lc').onclick=function(){if(!armed){armed=true;this.textContent='اضغط مرة أخرى للتأكيد';setTimeout(function(){armed=false;$('lc').textContent='مسح السجل'},4000);return}armed=false;LOG=[];save();render();this.textContent='مسح السجل'};
+$('lc').onclick=function(){if(!armed){armed=true;this.textContent='اضغط مرة أخرى للتأكيد';setTimeout(function(){armed=false;$('lc').textContent='مسح سجل هذا الطفل'},4000);return}armed=false;ALL=ALL.filter(function(e){return e.cid!==CUR});save();render();this.textContent='مسح سجل هذا الطفل'};
 $('vb').onclick=function(){go(true)};$('vback').onclick=function(){go(false)};window.addEventListener('hashchange',function(){document.body.classList.toggle('lv',location.hash==='#log')});
 load();$('lt').value=nowL();render();document.body.classList.toggle('lv',location.hash==='#log');
-fillConc();
+fillConc();applyKid();
 </script>
 </body>
 </html>
