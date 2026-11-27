@@ -1,1 +1,233 @@
-x
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>حاسبة جرعة الباراسيتامول والإيبوبروفين للأطفال</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#1b2430;--muted:#5d6b7c;--line:#d9dee5;--accent:#0f766e;--accent-t:#fff;--warn-bg:#fff4e0;--warn:#8a4b00;--bad-bg:#fde8e8;--bad:#9b1c1c;--ok-bg:#e6f6f3;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12171d;--card:#1b222b;--text:#e8edf3;--muted:#9aa8b8;--line:#2d3744;--accent:#2dd4bf;--accent-t:#06231f;--warn-bg:#3a2c12;--warn:#ffcf8a;--bad-bg:#3d1b1b;--bad:#ffb4b4;--ok-bg:#12312d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12171d;--card:#1b222b;--text:#e8edf3;--muted:#9aa8b8;--line:#2d3744;--accent:#2dd4bf;--accent-t:#06231f;--warn-bg:#3a2c12;--warn:#ffcf8a;--bad-bg:#3d1b1b;--bad:#ffb4b4;--ok-bg:#12312d;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",system-ui,sans-serif;line-height:1.6}
+main{max-width:520px;margin:0 auto;padding:16px}
+h1{font-size:1.25rem;margin:8px 0 4px}
+p.sub{margin:0 0 14px;color:var(--muted);font-size:.9rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:.9rem;font-weight:600;margin:10px 0 4px}
+input,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit;font-size:1rem}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit;font-weight:600;cursor:pointer}
+.seg button.on{background:var(--accent);color:var(--accent-t);border-color:var(--accent)}
+.res{border-radius:12px;padding:12px;margin-top:4px}
+.ok{background:var(--ok-bg)}.warn{background:var(--warn-bg);color:var(--warn)}.bad{background:var(--bad-bg);color:var(--bad)}
+.big{font-size:1.35rem;font-weight:700}
+.kv{display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding:7px 0;font-size:.92rem}
+.kv:first-of-type{border-top:0}
+.note{font-size:.82rem;color:var(--muted)}
+ul{margin:6px 0 0;padding-inline-start:20px;font-size:.88rem}
+.add{width:100%;margin-top:10px;padding:11px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-t);font:inherit;font-weight:700;cursor:pointer}
+.add.sec{background:var(--bg);color:var(--text);border:1px solid var(--line)}
+.add:disabled{opacity:.6}
+h2{font-size:1.05rem;margin:0 0 6px}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid var(--line);padding:8px 0;font-size:.9rem}
+.li button{border:0;background:none;color:var(--bad);font:inherit;cursor:pointer;padding:4px 8px}
+svg.ch{width:100%;height:auto;direction:ltr;display:block}
+.ch .g{stroke:var(--line);stroke-width:1}.ch .f{stroke:var(--bad);stroke-dasharray:4 3;stroke-width:1.2}
+.ch .ln{fill:none;stroke:var(--accent);stroke-width:2}.ch .pt{fill:var(--accent)}
+.ch text{fill:var(--muted);font-size:10px}
+.ch .dP{stroke:var(--accent);stroke-width:2;opacity:.45}.ch .dI{stroke:var(--warn);stroke-width:2;opacity:.8}
+#logv{display:none}
+body.lv main>*{display:none}
+body.lv main>#logv{display:block}
+#ll:empty::before{content:'لا توجد تسجيلات بعد.';color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+<h1>حاسبة جرعة الخافض والمسكّن للأطفال</h1>
+<p class="sub">باراسيتامول (للرضع والأطفال) وإيبوبروفين (للأطفال)</p>
+
+<div class="card">
+<div class="seg" role="group" aria-label="الدواء">
+<button id="bP" class="on" type="button">باراسيتامول</button>
+<button id="bI" type="button">إيبوبروفين</button>
+</div>
+<label for="w">وزن الطفل (كجم)</label>
+<input id="w" type="number" inputmode="decimal" min="1" max="60" step="0.1" placeholder="مثال: 10.5">
+<label for="a">العمر</label>
+<div class="row">
+<input id="a" type="number" inputmode="numeric" min="0" max="216" step="1" placeholder="مثال: 8">
+<select id="u"><option value="m">شهر</option><option value="y">سنة</option></select>
+</div>
+<label for="c">تركيز الدواء (راجع العبوة)</label>
+<select id="c"></select>
+<div id="cw" style="display:none">
+<label for="cm">اكتب التركيز كما هو مكتوب على العبوة</label>
+<div class="row">
+<input id="cm" type="number" inputmode="decimal" min="1" step="0.1" placeholder="مثال: 125">
+<select id="cu"><option value="5">ملغ / 5 مل</option><option value="1">ملغ / 1 مل</option></select>
+</div>
+</div>
+</div>
+
+<div id="out"></div>
+
+<div class="card" id="logc">
+<h2>سجل المتابعة</h2>
+<label>ماذا تريد أن تسجل؟</label>
+<input type="hidden" id="lk" value="">
+<div class="seg" id="lkb"><button type="button" data-k="T">درجة الحرارة</button><button type="button" data-k="P">باراسيتامول</button><button type="button" data-k="I">إيبوبروفين</button></div>
+<div id="lbox" style="display:none">
+<label for="lv" id="lvl">الكمية (مل)</label>
+<input id="lv" type="number" inputmode="decimal" step="0.1">
+<label for="lt">الوقت</label>
+<input id="lt" type="datetime-local">
+</div>
+<div id="lerr" class="note"></div>
+<button class="add" type="button" id="la">إضافة للسجل</button>
+<button class="add sec" type="button" id="lcx" style="display:none">إلغاء التعديل</button>
+<div id="nx" style="margin-top:10px"></div>
+<h2 style="margin-top:14px">تذبذب درجة الحرارة</h2>
+<div id="chart"></div>
+<div id="sm" style="margin-top:10px"></div>
+<button class="add sec" type="button" id="vb">مشاهدة السجل</button>
+<div class="note" style="margin-top:8px">السجل محفوظ على هذا الجهاز وهذا المتصفح فقط.</div>
+</div>
+
+<div class="card" id="logv">
+<button class="add sec" type="button" id="vback" style="margin:0 0 10px">رجوع</button>
+<h2>سجل الجرعات والحرارة</h2>
+<div id="ll"></div>
+<button class="add sec" type="button" id="lc">مسح السجل</button>
+</div>
+
+<div class="card note">
+هذه الحاسبة للمساعدة فقط ولا تغني عن الطبيب أو الصيدلاني. اتبع تعليمات العبوة إن اختلفت، واستخدم أداة القياس المرفقة مع الدواء فقط. لا تجمع بين منتجين يحتويان على نفس المادة الفعالة. إن كانت لدى الطفل أمراض كبد أو كلى أو ربو أو جفاف أو كان يتناول أدوية أخرى، استشر الطبيب أولًا.
+</div>
+</main>
+<script>
+var med="P";
+var CONC={P:[["100 ملغ/مل (قطرة)",100],["120 ملغ/5 مل (شراب)",24],["160 ملغ/5 مل (شراب)",32],["250 ملغ/5 مل (شراب)",50],["تركيز آخر…",0]],
+I:[["100 ملغ/5 مل (شراب)",20],["200 ملغ/5 مل (شراب)",40],["40 ملغ/مل (قطرة)",40],["تركيز آخر…",0]]};
+var $=function(i){return document.getElementById(i)};
+function fillConc(){var s=$("c");s.innerHTML="";CONC[med].forEach(function(o,i){var e=document.createElement("option");e.value=o[1];e.textContent=o[0];if(i===1&&med==="P")e.selected=true;if(i===0&&med==="I")e.selected=true;s.appendChild(e)});}
+function fmt(n){return (Math.round(n*10)/10).toString().replace(".",".")}
+function box(cls,html){$("out").innerHTML='<div class="card"><div class="res '+cls+'">'+html+'</div></div>'}
+function calc(){
+ $("cw").style.display=($("c").value==="0")?"block":"none";
+ var w=parseFloat($("w").value),a=parseFloat($("a").value);
+ if(!w||isNaN(a)){$("out").innerHTML="";return}
+ if($("u").value==="m"&&a>=24){a=Math.round(a/12);$("u").value="y";$("a").value=a}
+ var m=$("u").value==="y"?a*12:a;
+ var wn=((m<=12&&w>12)||(m<=24&&w>15))?'<div class="res warn" style="margin-bottom:8px"><b>تنبيه:</b> الوزن المدخل مرتفع بالنسبة لعمر رضيع. تأكد أنه وزن الطفل بالكيلوجرام وأن العمر صحيح.</div>':"";
+ if(w<2||w>60){box("bad","الوزن خارج النطاق المدعوم (2–60 كجم). استشر الطبيب أو الصيدلاني.");return}
+ if(m<3&&med==="P"){box("bad","<b>أقل من 3 أشهر:</b> لا تعطِ أي جرعة قبل استشارة الطبيب، فالحمى في هذا العمر تستوجب تقييمًا طبيًا.");return}
+ if((m<3||w<5)&&med==="I"){box("bad","<b>الإيبوبروفين لا يُستخدم لمن هم أقل من 3 أشهر أو أقل من 5 كجم.</b> استشر الطبيب.");return}
+ var lo,hi,gap,maxDay,maxDose,perDay,label;
+ if(med==="P"){lo=10;hi=15;gap="كل 6 ساعات (لا تقل عن 4 ساعات)";perDay=4;maxDay=Math.min(60*w,4000);maxDose=1000;label="باراسيتامول"}
+ else{lo=5;hi=10;gap="كل 8 ساعات";perDay=3;maxDay=Math.min(30*w,1200);maxDose=400;label="إيبوبروفين"}
+ var d1=Math.min(lo*w,maxDose),d2=Math.min(hi*w,maxDose);
+ var cc=parseFloat($("c").value);if(cc===0)cc=parseFloat($("cm").value)/parseFloat($("cu").value);
+ var html=wn+'<div>جرعة '+label+' الواحدة</div>';
+ if(cc>0){html+='<div class="big">'+fmt(d2/cc)+' مل</div>'}
+ else{html+='<div class="big">'+fmt(d2)+' ملغ</div><div class="note">أدخل تركيز الدواء لعرض الكمية بالمل.</div>'}
+ html+='<div class="kv"><span>التكرار</span><span>'+gap+'</span></div>';
+ html+='<div class="kv"><span>الحد الأقصى في 24 ساعة</span><span>'+(cc>0?fmt(maxDay/cc)+' مل':fmt(maxDay)+' ملغ')+'</span></div>';
+ html+='<div class="kv"><span>أقصى عدد جرعات يوميًا</span><span>'+perDay+'</span></div>';
+ html+='<ul><li>لا تتجاوز الحد الأقصى اليومي.</li>';
+ if(med==="P")html+='<li>إن لم تنخفض الحرارة أو استمرت أكثر من 48 ساعة فراجع الطبيب.</li>';
+ else html+='<li>يُعطى مع الطعام أو بعده، ويُتجنب عند القيء أو الجفاف أو قلة شرب السوائل.</li><li>لا يُستخدم لأكثر من 3 أيام دون مراجعة الطبيب.</li>';
+ html+='</ul>';
+ if(med==="I"&&m<6)html+='<div class="note">بعض النشرات تحدد الإيبوبروفين من عمر 6 أشهر، فتأكد من نشرة المنتج أو من الطبيب قبل الاستخدام.</div>';
+ if(cc>0&&cc>120)html+='<div class="note">تحقق من التركيز المدخل فهو مرتفع جدًا.</div>';
+ window.LD={med:med,ml:cc>0?Math.round(d2/cc*10)/10:null};if(cc>0)html+='<button class="add" type="button" onclick="addDose()">سجّل هذه الجرعة الآن في السجل</button>';
+ box("ok",html);
+}
+function setMed(x){med=x;$("bP").classList.toggle("on",x==="P");$("bI").classList.toggle("on",x==="I");fillConc();calc()}
+$("bP").onclick=function(){setMed("P")};$("bI").onclick=function(){setMed("I")};
+["w","a","u","c","cm","cu"].forEach(function(i){$(i).addEventListener("input",calc);$(i).addEventListener("change",calc)});
+var KEY='doselog',LOG=[],NM={P:'باراسيتامول',I:'إيبوبروفين'};
+function load(){try{LOG=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){LOG=[]}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(LOG))}catch(e){}}
+function nowL(){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
+function fd(t){try{return new Date(t).toLocaleString('ar',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}catch(e){return ''+new Date(t)}}
+function hm(t){try{return new Date(t).toLocaleTimeString('ar',{hour:'numeric',minute:'2-digit'})}catch(e){return ''}}
+function push(e){e.id=Date.now()+Math.floor(Math.random()*1000);LOG.push(e);LOG.sort(function(a,b){return a.t-b.t});save();render()}
+function addDose(){if(!window.LD)return;push({k:window.LD.med,v:window.LD.ml,t:Date.now()});var b=document.querySelector('#out .add');if(b){b.textContent='تم التسجيل';b.disabled=true}}
+function addEntry(){var k=$('lk').value,v=parseFloat($('lv').value),t=new Date($('lt').value).getTime(),er=$('lerr');
+ if(!k){er.textContent='اختر نوع التسجيل أولًا.';return}
+ if(!v||isNaN(t)){er.textContent='أدخل القيمة والوقت.';return}
+ if(k==='T'&&(v<34||v>43)){er.textContent='درجة الحرارة غير منطقية (34–43).';return}
+ if(k!=='T'&&v>30){er.textContent='تحقق من الكمية بالمل.';return}
+ er.textContent='';if(EID){var x=LOG.filter(function(e){return e.id===EID})[0];if(x){x.k=k;x.v=v;x.t=t;LOG.sort(function(a,b){return a.t-b.t});save();render()}endEdit();return}push({k:k,v:v,t:t});$('lv').value='';$('lt').value=nowL()}
+var EID=null;
+function toL(t){var d=new Date(t);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
+function go(l){document.body.classList.toggle('lv',l);try{location.hash=l?'log':''}catch(x){}window.scrollTo(0,0)}
+function edit(id){var e=LOG.filter(function(x){return x.id===id})[0];if(!e)return;go(false);EID=id;document.querySelector('#lkb button[data-k='+e.k+']').click();$('lv').value=e.v==null?'':e.v;$('lt').value=toL(e.t);$('la').textContent='حفظ التعديل';$('lcx').style.display='block';$('logc').scrollIntoView({behavior:'smooth'})}
+function endEdit(){EID=null;$('la').textContent='إضافة للسجل';$('lcx').style.display='none';$('lv').value='';$('lt').value=nowL()}
+function del(id){if(EID===id)endEdit();LOG=LOG.filter(function(e){return e.id!==id});save();render()}
+function chart(){
+ var T=LOG.filter(function(e){return e.k==='T'});
+ if(T.length<2)return `<div class='note'>سجّل قراءتين للحرارة على الأقل لعرض الرسم البياني.</div>`;
+ var W=360,H=210,L=32,R=12,Tp=14,B=34,t0=T[0].t,t1=T[T.length-1].t,vs=T.map(function(e){return e.v});
+ var lo=Math.floor(Math.min(36,Math.min.apply(null,vs)-.5)),hi=Math.ceil(Math.max(39,Math.max.apply(null,vs)+.5));
+ var X=function(t){return L+(t1===t0?0:(t-t0)/(t1-t0))*(W-L-R)},Y=function(v){return Tp+(hi-v)/(hi-lo)*(H-Tp-B)};
+ var s=`<svg class='ch' viewBox='0 0 ${W} ${H}'>`;
+ for(var g=lo;g<=hi;g++)s+=`<line class='g' x1='${L}' x2='${W-R}' y1='${Y(g)}' y2='${Y(g)}'/><text x='${L-4}' y='${Y(g)+3}' text-anchor='end'>${g}</text>`;
+ s+=`<line class='f' x1='${L}' x2='${W-R}' y1='${Y(38)}' y2='${Y(38)}'/>`;
+ LOG.forEach(function(e){if(e.k!=='T'&&e.t>=t0&&e.t<=t1)s+=`<line class='d${e.k}' x1='${X(e.t)}' x2='${X(e.t)}' y1='${Tp}' y2='${H-B}'/><text x='${X(e.t)}' y='${H-B+12}' text-anchor='middle'>${e.k==='P'?'ب':'إ'}</text>`});
+ s+=`<polyline class='ln' points='${T.map(function(e){return X(e.t)+','+Y(e.v)}).join(' ')}'/>`;
+ T.forEach(function(e){s+=`<circle class='pt' cx='${X(e.t)}' cy='${Y(e.v)}' r='3'/>`;if(T.length<=12)s+=`<text x='${X(e.t)}' y='${Y(e.v)-7}' text-anchor='middle'>${e.v}</text>`});
+ s+=`<text x='${L}' y='${H-4}' text-anchor='start'>${fd(t0)}</text><text x='${W-R}' y='${H-4}' text-anchor='end'>${fd(t1)}</text></svg>`;
+ return s+`<div class='note'>الخط المتقطع = 38°م · ب = جرعة باراسيتامول · إ = جرعة إيبوبروفين</div>`}
+function dur(ms){var m=Math.max(0,Math.round(ms/6e4));if(m<60)return m+' دقيقة';var h=Math.floor(m/60),r=m%60;return h+' ساعة'+(r?' و'+r+' دقيقة':'')}
+function summary(){
+ var T=LOG.filter(function(e){return e.k==='T'});
+ if(!T.length)return `<div class='note'>سجّل درجة الحرارة ليظهر ملخص حالة الطفل هنا.</div>`;
+ var now=Date.now(),last=T[T.length-1],prev=T.length>1?T[T.length-2]:null,mx=T[0],mn=T[0],v=last.v,cls,st;
+ T.forEach(function(e){if(e.v>mx.v)mx=e;if(e.v<mn.v)mn=e});
+ if(v<37.5){cls='ok';st='طبيعية'}else if(v<38){cls='warn';st='مرتفعة قليلًا'}else if(v<39){cls='warn';st='حمى'}else if(v<40){cls='bad';st='حمى مرتفعة'}else{cls='bad';st='حمى مرتفعة جدًا'}
+ var L=[`آخر قراءة <b>${v}°م</b> (${st}) قبل ${dur(now-last.t)}.`];
+ if(prev){var d=Math.round((v-prev.v)*10)/10,g=dur(last.t-prev.t);
+  if(d<=-0.3)L.push(`الاتجاه: <b>في انخفاض</b> (${Math.abs(d)}° عن القراءة السابقة قبل ${g}).`);
+  else if(d>=0.3)L.push(`الاتجاه: <b>في ارتفاع</b> (+${d}° عن القراءة السابقة قبل ${g}).`);
+  else L.push('الاتجاه: <b>مستقر</b> تقريبًا مقارنة بالقراءة السابقة.')}
+ if(T.length>1)L.push(`أعلى قراءة ${mx.v}°م (${fd(mx.t)}) وأدنى قراءة ${mn.v}°م (${fd(mn.t)}).`);
+ var D=LOG.filter(function(e){return e.k!=='T'&&e.t<=now+6e4}),ld=D[D.length-1];
+ if(ld){var bef=T.filter(function(e){return e.t<=ld.t}),aft=T.filter(function(e){return e.t>ld.t});
+  if(aft.length){var pb=bef[bef.length-1],pa=aft[aft.length-1];
+   if(pb){var dd=Math.round((pa.v-pb.v)*10)/10;L.push(dd<=-0.3?`بعد آخر جرعة (${NM[ld.k]}) انخفضت الحرارة من ${pb.v} إلى ${pa.v}°م.`:dd>=0.3?`بعد آخر جرعة (${NM[ld.k]}) لم تنخفض الحرارة (من ${pb.v} إلى ${pa.v}°م).`:`بعد آخر جرعة (${NM[ld.k]}) بقيت الحرارة قريبة من ${pb.v}°م.`)}
+   else L.push(`سُجلت قراءات بعد آخر جرعة (${NM[ld.k]}).`)}
+  else L.push(`لم تُسجَّل قراءة بعد آخر جرعة (${NM[ld.k]} قبل ${dur(now-ld.t)}). قس الحرارة بعد نحو ساعة من الجرعة لتعرف أثرها.`)}
+ if(now-last.t>4*36e5)L.push('مرّت أكثر من 4 ساعات على آخر قراءة، يُستحسن قياس الحرارة من جديد.');
+ if(v>=38){var i=T.length-1;while(i>0&&T[i-1].v>=38)i--;if(last.t-T[i].t>=48*36e5){cls='bad';L.push('<b>الحمى مسجّلة منذ أكثر من 48 ساعة: راجع الطبيب.</b>')}}
+ var ag=parseFloat($('a').value),mo=isNaN(ag)?null:($('u').value==='y'?ag*12:ag);
+ if(mo!==null&&mo<3&&v>=38){cls='bad';L.push('<b>عمر أقل من 3 أشهر مع حرارة 38°م فأكثر: يلزم تقييم طبي فورًا.</b>')}
+ if(v>=40){cls='bad';L.push('<b>حرارة 40°م فأكثر: راجع الطبيب أو الطوارئ.</b>')}
+ return `<div class='res ${cls}'><b>وضع الطفل حسب القراءات المسجلة</b><ul>${L.map(function(x){return '<li>'+x+'</li>'}).join('')}</ul></div><details style='margin-top:8px'><summary>متى أراجع الطبيب؟</summary><ul><li>حرارة 40°م فأكثر، أو 38°م فأكثر لمن هم أقل من 3 أشهر.</li><li>استمرار الحمى أكثر من 48–72 ساعة، أو عدم انخفاضها رغم الجرعات.</li><li>خمول شديد أو صعوبة في الاستيقاظ، أو تشنجات، أو تيبس في الرقبة.</li><li>صعوبة في التنفس، أو طفح جلدي لا يختفي بالضغط.</li><li>رفض الشرب أو قلة التبول، أو قيء متكرر، أو ألم شديد.</li></ul></details><div class='note' style='margin-top:6px'>هذا ملخص آلي من القراءات التي أدخلتها وليس تشخيصًا.</div>`}
+function render(){
+ var now=Date.now(),gaps={P:6,I:8},mx={P:4,I:3},nx='';
+ ['P','I'].forEach(function(k){
+  var d=LOG.filter(function(e){return e.k===k});if(!d.length)return;
+  var last=d[d.length-1],nxt=last.t+gaps[k]*36e5,c=d.filter(function(e){return now-e.t<864e5}).length;
+  nx+=`<div class='kv'><span>${NM[k]}: آخر جرعة ${fd(last.t)}</span><span>${nxt>now?'التالية ليست قبل '+hm(nxt):'يمكن إعطاء جرعة عند الحاجة'}</span></div>`;
+  if(c>=mx[k])nx+=`<div class='res bad' style='margin:6px 0'>وصلت الحد الأقصى لجرعات ${NM[k]} خلال 24 ساعة (${mx[k]}).</div>`;
+ });
+ var T=LOG.filter(function(e){return e.k==='T'}),lt=T[T.length-1];
+ if(lt&&lt.v>=40)nx+=`<div class='res bad' style='margin:6px 0'>آخر قراءة ${lt.v}°م مرتفعة جدًا، راجع الطبيب فورًا.</div>`;
+ else if(lt&&lt.v>=39)nx+=`<div class='res warn' style='margin:6px 0'>آخر قراءة ${lt.v}°م مرتفعة، راجع الطبيب إن استمرت أو ظهرت أعراض أخرى.</div>`;
+ $('nx').innerHTML=nx;$('vb').textContent='مشاهدة السجل ('+LOG.length+')';$('chart').innerHTML=chart();$('sm').innerHTML=summary();
+ $('ll').innerHTML=LOG.slice().reverse().map(function(e){var s=e.k==='T'?'حرارة '+e.v+'°م':NM[e.k]+(e.v!=null?' '+e.v+' مل':'');return `<div class='li'><span>${s}<br><span class='note'>${fd(e.t)}</span></span><span><button type='button' style='color:var(--accent)' onclick='edit(${e.id})'>تعديل</button><button type='button' onclick='del(${e.id})'>حذف</button></span></div>`}).join('');
+}
+Array.prototype.forEach.call(document.querySelectorAll('#lkb button'),function(b){b.onclick=function(){var k=b.getAttribute('data-k');$('lk').value=k;Array.prototype.forEach.call(document.querySelectorAll('#lkb button'),function(x){x.classList.toggle('on',x===b)});$('lbox').style.display='block';$('lvl').textContent=k==='T'?'درجة الحرارة (°م)':'كمية '+NM[k]+' (مل)';$('lv').value='';$('lerr').textContent='';$('lv').focus()}});
+$('la').onclick=addEntry;$('lcx').onclick=endEdit;
+var armed=false;
+$('lc').onclick=function(){if(!armed){armed=true;this.textContent='اضغط مرة أخرى للتأكيد';setTimeout(function(){armed=false;$('lc').textContent='مسح السجل'},4000);return}armed=false;LOG=[];save();render();this.textContent='مسح السجل'};
+$('vb').onclick=function(){go(true)};$('vback').onclick=function(){go(false)};window.addEventListener('hashchange',function(){document.body.classList.toggle('lv',location.hash==='#log')});
+load();$('lt').value=nowL();render();document.body.classList.toggle('lv',location.hash==='#log');
+fillConc();
+</script>
+</body>
+</html>
